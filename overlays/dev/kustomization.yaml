@@ -1,22 +1,22 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
+ 
 resources:
 - ../../base
-
+ 
 namespace: dvss-apps-ns-dev
-
+ 
 namePrefix: 'dev-'
-
+ 
 images:
 - name: xyz/details-test
   newName: apoorva6777/ll
   newTag: 0.0.1
-
+ 
 replicas:
 - name: nest-ms-deployment
   count: 1
-
+ 
 patches:
 - target:
     kind: HorizontalPodAutoscaler
@@ -28,7 +28,7 @@ patches:
     - op: replace
       path: /spec/minReplicas
       value: "1"
-
+ 
 - target:
     kind: Deployment
     name: nest-ms-deployment
@@ -43,10 +43,10 @@ patches:
       path: /spec/selector/matchLabels/app
       value: nest-ms-dev
     - op: replace
-      path: /spec/template/spec/volumes/0/csi/volumeAttributes/secretproviderClass
-      value: dev-aws-secret
-
-
+      path: /spec/template/spec/volumes/0/csi/volumeAttributes/secretProviderClass
+      value: dev-aws-secrets
+ 
+ 
 - target:
     kind: AuthorizationPolicy
     name: productpage-viewer-1
@@ -67,7 +67,7 @@ patches:
     - op: replace
       path: /spec/targetRefs/0/name
       value: dev-nest-ms-service
-
+ 
 - target:
     kind: ClusterRoleBinding
     name: dev-sa-crb
@@ -75,7 +75,7 @@ patches:
     - op: replace
       path: /metadata/namespace
       value: dvss-apps-ns-dev
-
+ 
 - target:
     kind: Ingress
     name: nest-ms-ingress
@@ -90,11 +90,27 @@ patches:
     - op: replace
       path: /spec/selector/app
       value: nest-ms-dev
-
+ 
 - target:
     kind: SecretProviderClass
-    name: dev-aws-secrets
+    name: aws-secrets
   patch: |-
     - op: replace
-      path: /spec/parameters/objects/0/objectName
-      value: "dev-dvss-dc-ap1-app-secrets-ssm-param-store"
+      path: /spec/parameters/objects
+      value: |
+        - objectName: "dev-dvss-dc-ap1-app-secrets-ssm-param-store"
+          objectType: "ssmparameter"
+          jmesPath:
+            - path: db_host
+              objectAlias: DATABASE_HOST
+            - path: db_user
+              objectAlias: DATABASE_USER
+            - path: db_password
+              objectAlias: DATABASE_PASSWORD
+            - path: redis_password
+              objectAlias: REDIS_PASSWORD  
+            - path: redis_host
+              objectAlias: REDIS_HOST
+            - path: redis_port
+              objectAlias: REDIS_PORT
+ 
